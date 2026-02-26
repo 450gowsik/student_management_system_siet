@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2>User Management</h2>
+        <p class="text-muted">Approve or remove users who have signed up.</p>
+    </div>
+</div>
+
+<div class="table-wrapper">
+    <table>
+        <thead>
+            <tr>
+                <th>Teacher Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th class="text-right">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>
+                    <div style="font-weight: 600;">{{ user.full_name }}</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">@{{ user.username }}</div>
+                </td>
+                <td>
+                    {% if user.email %}
+                    <div style="font-size: 0.875rem;">{{ user.email }}</div>
+                    {% else %}
+                    <span class="text-muted" style="font-size: 0.875rem;">No email</span>
+                    {% endif %}
+                </td>
+                <td>{{ user.role }}</td>
+                <td>
+                    {% if user.is_approved %}
+                    <span class="badge badge-green">Approved</span>
+                    {% else %}
+                    <span class="badge"
+                        style="background: rgba(245, 158, 11, 0.1); color: #fbbf24; border-color: rgba(245, 158, 11, 0.2);">Pending</span>
+                    {% endif %}
+                </td>
+                <td class="text-right">
+                    <div style="display: inline-flex; gap: 8px;">
+                        {% if not user.is_approved %}
+                        <a href="{{ url_for('approve_user', id=user.id) }}" class="btn btn-primary btn-sm">Approve</a>
+                        {% endif %}
+                        <form action="{{ url_for('delete_user', id=user.id) }}" method="POST"
+                            onsubmit="return confirm('Are you sure you want to delete this user?');"
+                            style="display: inline;">
+                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" class="empty-state">No users to manage.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

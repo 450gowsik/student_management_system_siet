@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2>Analytics: {{ display_name }}</h2>
+        <p class="text-muted">Statistical insights for the Student Management System.</p>
+    </div>
+</div>
+
+<div class="dashboard-container">
+    <!-- Sidebar Navigation -->
+    <aside class="dept-sidebar">
+        <div class="dept-title">Scope</div>
+        <a href="{{ url_for('analytics', dept='all') }}" class="dept-link {{ 'active' if selected_dept == 'all' }}">
+            All Departments (Global)
+        </a>
+
+        <div class="dept-title">Departments</div>
+        {% for dept in dept_list %}
+        <a href="{{ url_for('analytics', dept=dept.id) }}"
+            class="dept-link {{ 'active' if selected_dept|string == dept.id|string }}">
+            {{ dept.degree_type }} - {{ dept.name }}
+        </a>
+        {% endfor %}
+    </aside>
+
+    <!-- Main Content Area -->
+    <section>
+        <!-- Semester Tabs -->
+        <div class="tabs-container">
+            <a href="{{ url_for('analytics', dept=selected_dept, sem='all') }}"
+                class="tab-link {{ 'active' if selected_sem == 'all' }}">All Semesters</a>
+            {% for sem in range(1, 9) %}
+            <a href="{{ url_for('analytics', dept=selected_dept, sem=sem) }}"
+                class="tab-link {{ 'active' if selected_sem|string == sem|string }}">Sem {{ sem }}</a>
+            {% endfor %}
+        </div>
+
+        <!-- Summary Metrics Cards -->
+        <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));">
+            <div class="stat-card">
+                <div class="stat-label">Total Students</div>
+                <div class="stat-value">{{ summary.total_students }}</div>
+                <div class="text-muted" style="font-size: 0.7rem;">COUNT(*)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Avg CGPA</div>
+                <div class="stat-value">{{ summary.avg_cgpa|round(1) }}</div>
+                <div class="text-muted" style="font-size: 0.7rem;">AVG(grade_point)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Departments</div>
+                <div class="stat-value">{{ course_stats|length if selected_dept == 'all' else 1 }}</div>
+                <div class="text-muted" style="font-size: 0.7rem;">COUNT(DISTINCT)</div>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 24px; margin-top: 24px;">
+            <!-- Statistics Table -->
+            <div class="card">
+                <h3>{% if selected_dept == 'all' %}Distribution by Department{% else %}Distribution by Semester{% endif
+                    %}</h3>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>{% if selected_dept == 'all' %}Department{% else %}Semester{% endif %}</th>
+                                <th>Students</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stat in course_stats %}
+                            <tr>
+                                <td>
+                                    <span class="badge badge-blue">{{ stat.course }}</span>
+                                </td>
+                                <td>{{ stat.student_count }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Gender Breakdown -->
+            <div class="card">
+                <h3>Gender Breakdown</h3>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Gender</th>
+                                <th>Count</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stat in gender_stats %}
+                            <tr>
+                                <td>{{ stat.gender or 'Not Specified' }}</td>
+                                <td>{{ stat.count }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Performers -->
+        <div class="card" style="margin-top: 24px;">
+            <h3>Top 5 Performers by CGPA</h3>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Name</th>
+                            <th>Roll No</th>
+                            <th>CGPA</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in top_students %}
+                        <tr>
+                            <td>#{{ loop.index }}</td>
+                            <td style="font-weight: 500;">{{ student.name }}</td>
+                            <td>{{ student.roll_number }}</td>
+                            <td><span class="badge badge-green">{{ student.avg_gp|round(1) }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+</div>
+
+<style>
+    .card {
+        background: var(--bg-card);
+        padding: 1.5rem;
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--border-subtle);
+    }
+
+    .card h3 {
+        margin-top: 0;
+        margin-bottom: 1.25rem;
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text-main);
+    }
+</style>
+
+{% endblock %}

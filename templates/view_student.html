@@ -1,0 +1,254 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container" style="max-width: 900px; margin: 40px auto;">
+    <div style="margin-bottom: 20px;">
+        <a href="{{ url_for('teacher_search') }}" class="btn btn-outline btn-sm">← Back to Search</a>
+    </div>
+
+    <div style="text-align: center; margin-bottom: 40px;">
+        <div
+            style="width: 100px; height: 100px; background: var(--primary-faded); color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 2.5rem; font-weight: 700;">
+            {{ student.name[0] }}
+        </div>
+        <h1 style="font-size: 2.25rem; margin-bottom: 8px;">{{ student.name }}</h1>
+        <p class="text-muted" style="font-size: 1.1rem;">{{ dept_name }} | Semester {{ student.current_semester }}</p>
+        <p style="font-size: 0.9rem; color: var(--primary);">{{ student.roll_number }}</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+        <!-- Academic Info -->
+        <div class="card" style="padding: 32px;">
+            <h3 style="margin-bottom: 24px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 12px;">
+                Academic Performance</h3>
+
+            <div
+                style="background: var(--bg-card-subtle); padding: 30px; border-radius: 16px; text-align: center; margin-bottom: 24px;">
+                <div
+                    style="font-size: 0.875rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">
+                    CGPA</div>
+                <div style="font-size: 3.5rem; font-weight: 800; color: var(--primary);">{{ student.cgpa }}</div>
+                <div style="margin-top: 12px;">
+                    {% if student.cgpa >= 9.0 %}
+                    <span class="badge text-gold"
+                        style="background: rgba(234, 179, 8, 0.1); border-color: rgba(234, 179, 8, 0.2); padding: 8px 16px; font-size: 1rem;">⭐
+                        Topper</span>
+                    {% elif student.cgpa < 5.0 %} <span class="badge text-red"
+                        style="background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2); padding: 8px 16px; font-size: 1rem;">
+                        Needs Improvement</span>
+                        {% else %}
+                        <span class="badge text-blue"
+                            style="background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.2); padding: 8px 16px; font-size: 1rem;">Good
+                            Standing</span>
+                        {% endif %}
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div style="background: var(--bg-card-subtle); padding: 16px; border-radius: 12px;">
+                    <div style="color: var(--text-muted); font-size: 0.75rem;">Status</div>
+                    <div style="font-size: 1rem; font-weight: 600; margin-top: 4px;">
+                        {% if student.cgpa >= 5.0 %}
+                        <span class="text-green">Pass</span>
+                        {% else %}
+                        <span class="text-red">Arrear</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div style="background: var(--bg-card-subtle); padding: 16px; border-radius: 12px;">
+                    <div style="color: var(--text-muted); font-size: 0.75rem;">Semester</div>
+                    <div style="font-size: 1rem; font-weight: 600; margin-top: 4px;">{{ student.current_semester }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Personal Info -->
+        <div class="card" style="padding: 32px;">
+            <h3 style="margin-bottom: 24px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 12px;">
+                Personal Information</h3>
+
+            <div style="display: grid; gap: 20px;">
+                <div>
+                    <div style="color: var(--text-muted); font-size: 0.75rem; margin-bottom: 4px;">Gender</div>
+                    <div style="font-size: 1rem;">{{ student.gender or 'N/A' }}</div>
+                </div>
+                <div>
+                    <div style="color: var(--text-muted); font-size: 0.75rem; margin-bottom: 4px;">Date of Birth</div>
+                    <div style="font-size: 1rem;">{{ student.dob or 'N/A' }}</div>
+                </div>
+                <div>
+                    <div style="color: var(--text-muted); font-size: 0.75rem; margin-bottom: 4px;">Email</div>
+                    <div style="font-size: 1rem; word-break: break-all;">{{ student.email or 'N/A' }}</div>
+                </div>
+                <div>
+                    <div style="color: var(--text-muted); font-size: 0.75rem; margin-bottom: 4px;">Phone</div>
+                    <div style="font-size: 1rem;">{{ student.phone or 'N/A' }}</div>
+                </div>
+                <div>
+                    <div style="color: var(--text-muted); font-size: 0.75rem; margin-bottom: 4px;">Address</div>
+                    <div style="font-size: 1rem;">{{ student.address or 'N/A' }}</div>
+                </div>
+                <div>
+                    <div style="color: var(--text-muted); font-size: 0.75rem; margin-bottom: 4px;">Admission Year</div>
+                    <div style="font-size: 1rem;">{{ student.admission_year or 'N/A' }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Semester Wise Results -->
+    <div style="margin-top: 40px;">
+        <h3 style="margin-bottom: 24px; padding-bottom: 12px; border-bottom: 2px solid var(--primary);">
+            📚 Semester-wise Academic Records
+        </h3>
+
+        {% for sem_data in semester_results %}
+        <div class="card" style="margin-bottom: 24px; padding: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h4 style="margin: 0;">Semester {{ sem_data.semester }}</h4>
+                <div style="display: flex; gap: 12px; align-items: center;">
+                    {% if sem_data.results %}
+                    <span class="badge {{ 'badge-error' if sem_data.has_arrears else 'badge-success' }}"
+                        style="padding: 6px 12px;">
+                        {{ 'Arrears' if sem_data.has_arrears else 'Clear' }}
+                    </span>
+                    <div style="text-align: right;">
+                        <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">SGPA</div>
+                        <div style="font-size: 1.25rem; font-weight: 700; color: var(--primary);">{{ sem_data.sgpa }}
+                        </div>
+                    </div>
+                    {% else %}
+                    <span class="text-muted" style="font-size: 0.9rem;">No data available</span>
+                    {% endif %}
+                    <a href="{{ url_for('marks_entry', roll_no=student.roll_number, sem=sem_data.semester) }}"
+                        class="btn btn-sm btn-outline" style="margin-left: 12px;">
+                        📝 Edit Marks
+                    </a>
+                </div>
+            </div>
+
+            {% if sem_data.results %}
+            <div class="table-wrapper"
+                style="border: 1px solid var(--border-subtle); border-radius: 8px; overflow: hidden;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                    <thead>
+                        <tr style="background: var(--bg-card-subtle);">
+                            <th style="padding: 10px; text-align: left;">Subject</th>
+                            <th style="padding: 10px; text-align: center;">Credits</th>
+                            <th style="padding: 10px; text-align: center;">Internal</th>
+                            <th style="padding: 10px; text-align: center;">External</th>
+                            <th style="padding: 10px; text-align: center;">Total</th>
+                            <th style="padding: 10px; text-align: center;">Grade</th>
+                            <th style="padding: 10px; text-align: center;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for res in sem_data.results %}
+                        <tr style="border-top: 1px solid var(--border-subtle);">
+                            <td style="padding: 10px;">
+                                <div style="font-weight: 500;">{{ res.subject_name }}</div>
+                            </td>
+                            <td style="padding: 10px; text-align: center;">{{ res.credits }}</td>
+                            <td style="padding: 10px; text-align: center;">{{ res.internal_marks|round(1) }}</td>
+                            <td style="padding: 10px; text-align: center;">{{ res.external_marks|round(1) }}</td>
+                            <td style="padding: 10px; text-align: center; font-weight: 600;">{{ res.total_marks|round }}
+                            </td>
+                            <td style="padding: 10px; text-align: center;">
+                                <span style="font-weight: 700;"
+                                    class="{{ 'text-red' if res.grade == 'RA' else 'text-primary' }}">
+                                    {{ res.grade }}
+                                </span>
+                            </td>
+                            <td style="padding: 10px; text-align: center;">
+                                <span class="{{ 'text-green' if res.result == 'Pass' else 'text-red' }}"
+                                    style="font-weight: 500;">
+                                    {{ res.result }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Actions -->
+    <div style="margin-top: 30px; display: flex; gap: 12px; justify-content: center;" class="no-print">
+        <a href="{{ url_for('marks_entry', roll_no=student.roll_number) }}" class="btn"
+            style="background: rgba(99, 102, 241, 0.1); color: #6366f1; border: 1px solid rgba(99, 102, 241, 0.2);">📝
+            Add/Edit Marks</a>
+        <button onclick="window.print()" class="btn"
+            style="background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2);">📄
+            Export / Print</button>
+        <a href="{{ url_for('edit', roll_no=student.roll_number) }}" class="btn btn-primary">Edit Student</a>
+        <form action="{{ url_for('delete', roll_no=student.roll_number) }}" method="POST" style="display: inline;">
+            <button type="submit" class="btn btn-danger"
+                onclick="return confirm('Are you sure you want to delete this student?')">Delete Student</button>
+        </form>
+    </div>
+</div>
+
+<style>
+    .badge-error {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--red);
+        border-color: rgba(239, 68, 68, 0.2);
+    }
+
+    .badge-success {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--green);
+        border-color: rgba(16, 185, 129, 0.2);
+    }
+
+    .text-primary {
+        color: var(--primary);
+    }
+
+    .text-red {
+        color: var(--red);
+    }
+
+    .text-green {
+        color: var(--green);
+    }
+
+    @media print {
+
+        .no-print,
+        .navbar,
+        header,
+        footer {
+            display: none !important;
+        }
+
+        body {
+            background: white !important;
+            color: black !important;
+        }
+
+        .card {
+            border: 1px solid #ddd !important;
+            box-shadow: none !important;
+            background: white !important;
+        }
+
+        .container {
+            max-width: 100% !important;
+            margin: 0 !important;
+        }
+
+        * {
+            color: black !important;
+        }
+
+        .badge {
+            border: 1px solid #333 !important;
+        }
+    }
+</style>
+{% endblock %}

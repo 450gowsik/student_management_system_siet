@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="max-width: 420px; margin: 50px auto; padding: 0 20px;">
+    <div
+        style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 40px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+
+        <!-- Header -->
+        <div style="text-align: center; margin-bottom: 30px;">
+            <h2 style="font-size: 1.5rem; font-weight: 600; color: var(--text-vibrant); margin-bottom: 8px;">
+                Login to Your Account
+            </h2>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">
+                Sri Shakthi Institute of Engineering & Technology
+            </p>
+        </div>
+
+        <!-- Role Selection -->
+        <div
+            style="display: flex; gap: 8px; margin-bottom: 24px; background: var(--bg-card-subtle); padding: 4px; border-radius: 8px;">
+            <input type="radio" id="role-teacher" name="role_toggle" value="teacher" checked style="display: none;">
+            <label for="role-teacher" class="role-btn">Teacher</label>
+
+            <input type="radio" id="role-admin" name="role_toggle" value="admin" style="display: none;">
+            <label for="role-admin" class="role-btn">Admin</label>
+
+            <input type="radio" id="role-student" name="role_toggle" value="student" style="display: none;">
+            <label for="role-student" class="role-btn">Student</label>
+        </div>
+
+        <!-- Login Form -->
+        <form method="POST" id="loginForm">
+            <input type="hidden" name="role" id="selectedRole" value="teacher">
+
+            <div style="margin-bottom: 20px;">
+                <label id="usernameLabel"
+                    style="display: block; font-size: 0.85rem; font-weight: 500; color: var(--text-muted); margin-bottom: 8px;">
+                    Username
+                </label>
+                <input type="text" id="username" name="username" placeholder="Enter username" required
+                    style="width: 100%; padding: 12px 14px; border: 1px solid var(--border-subtle); border-radius: 8px; background: var(--bg-card-subtle); color: var(--text); font-size: 0.95rem;">
+            </div>
+
+            <div style="margin-bottom: 24px;">
+                <label
+                    style="display: block; font-size: 0.85rem; font-weight: 500; color: var(--text-muted); margin-bottom: 8px;">
+                    Password
+                </label>
+                <input type="password" id="password" name="password" placeholder="Enter password" required
+                    style="width: 100%; padding: 12px 14px; border: 1px solid var(--border-subtle); border-radius: 8px; background: var(--bg-card-subtle); color: var(--text); font-size: 0.95rem;">
+            </div>
+
+            <button type="submit" class="btn btn-primary"
+                style="width: 100%; padding: 14px; font-size: 1rem; font-weight: 600;">
+                Login
+            </button>
+        </form>
+
+        <!-- Footer -->
+        <div
+            style="text-align: center; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border-subtle);">
+            <span style="color: var(--text-muted); font-size: 0.875rem;">New Teacher?</span>
+            <a href="{{ url_for('signup') }}"
+                style="color: var(--primary); font-weight: 500; margin-left: 4px; font-size: 0.875rem;">Request
+                Access</a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .role-btn {
+        flex: 1;
+        text-align: center;
+        padding: 10px 12px;
+        cursor: pointer;
+        border-radius: 6px;
+        font-weight: 500;
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        transition: all 0.2s;
+    }
+
+    .role-btn:hover {
+        color: var(--text);
+    }
+
+    input[type="radio"]:checked+.role-btn {
+        background: var(--primary);
+        color: white;
+    }
+
+    input:focus {
+        outline: none;
+        border-color: var(--primary) !important;
+    }
+</style>
+
+<script>
+    const roleToggles = document.querySelectorAll('input[name="role_toggle"]');
+    const selectedRoleInput = document.getElementById('selectedRole');
+    const usernameLabel = document.getElementById('usernameLabel');
+    const usernameInput = document.getElementById('username');
+
+    roleToggles.forEach(toggle => {
+        toggle.addEventListener('change', (e) => {
+            const role = e.target.value;
+            selectedRoleInput.value = role;
+
+            if (role === 'student') {
+                usernameLabel.innerText = "Roll Number";
+                usernameInput.placeholder = "e.g. AGR-20240001";
+            } else if (role === 'admin') {
+                usernameLabel.innerText = "Admin Username";
+                usernameInput.placeholder = "Enter admin username";
+            } else {
+                usernameLabel.innerText = "Username";
+                usernameInput.placeholder = "Enter username";
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,429 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="form-panel" style="max-width: 1200px;">
+    <h2 style="margin-bottom: 24px;">
+        {% if student %} Edit Student {% else %} Add Student {% endif %}
+    </h2>
+
+    <form method="POST" id="studentForm" data-is-new="{{ 'true' if not student else 'false' }}">
+        <!-- Basic Info Section -->
+        <div class="section-header">📋 Basic Information</div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div class="form-group">
+                <label for="department_id">Department</label>
+                <select id="department_id" name="department_id" required onchange="loadSubjects()"
+                    style="width: 100%; padding: 8px; border: 1px solid var(--border-subtle); border-radius: 4px; background: var(--bg-card);">
+                    {% for dept in dept_list %}
+                    <option value="{{ dept.id }}" {% if current_dept and current_dept|string==dept.id|string
+                        %}selected{% elif loop.first and not student %}selected{% endif %}>
+                        {{ dept.degree_type }} - {{ dept.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="roll_number">Roll Number</label>
+                <input type="text" id="roll_number" name="roll_number"
+                    value="{{ student.roll_number if student else '' }}" placeholder="e.g. 24IT001" required>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div class="form-group">
+                <label for="name">Full Name</label>
+                <input type="text" id="name" name="name" value="{{ student.name if student else '' }}" required
+                    placeholder="Enter full name">
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email"
+                    value="{{ student.email if student and student.email else '' }}" placeholder="student@example.com">
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div class="form-group">
+                <label for="admission_year">Admission Year</label>
+                <select id="admission_year" name="admission_year" required
+                    style="width: 100%; padding: 8px; border: 1px solid var(--border-subtle); border-radius: 4px; background: var(--bg-card);">
+                    {% for year in range(2020, 2030) %}
+                    <option value="{{ year }}" {% if student and student.admission_year|int==year %}selected{% elif
+                        year==2024 and not student %}selected{% endif %}>
+                        {{ year }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="current_semester">Current Semester</label>
+                <select id="current_semester" name="current_semester" required onchange="loadSubjects()"
+                    style="width: 100%; padding: 8px; border: 1px solid var(--border-subtle); border-radius: 4px; background: var(--bg-card);">
+                    {% for sem in range(1, 9) %}
+                    <option value="{{ sem }}" {% if student and student.current_semester|int==sem %}selected{% elif
+                        sem==1 and not student %}selected{% endif %}>
+                        Semester {{ sem }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div class="form-group">
+                <label for="gender">Gender</label>
+                <select id="gender" name="gender"
+                    style="width: 100%; padding: 8px; border: 1px solid var(--border-subtle); border-radius: 4px; background: var(--bg-card);">
+                    <option value="Male" {% if student and student.gender=='Male' %}selected{% endif %}>Male</option>
+                    <option value="Female" {% if student and student.gender=='Female' %}selected{% endif %}>Female
+                    </option>
+                    <option value="Other" {% if student and student.gender=='Other' %}selected{% endif %}>Other</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="phone">Phone</label>
+                <input type="tel" id="phone" name="phone"
+                    value="{{ student.phone if student and student.phone else '' }}" placeholder="9876543210">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="address">Address</label>
+            <textarea id="address" name="address" rows="2"
+                style="width: 100%; padding: 8px; border: 1px solid var(--border-subtle); border-radius: 4px; background: var(--bg-card);"
+                placeholder="Enter full address">{{ student.address if student and student.address else '' }}</textarea>
+        </div>
+
+        <!-- Marks Entry Section -->
+        {% if not student %}
+        <div class="section-header" style="margin-top: 32px;">📝 Marks Entry (Anna University Format)</div>
+
+        <div class="marks-info-panel">
+            <div class="marks-info-item">
+                <span class="marks-label">Internal (40)</span>
+                <span class="marks-detail">CAT-1 + CAT-2 + CAT-3 + Assignment + Attendance</span>
+            </div>
+            <div class="marks-info-item">
+                <span class="marks-label">External (60)</span>
+                <span class="marks-detail">University Exam (100 scaled to 60)</span>
+            </div>
+        </div>
+
+        <div id="marksSection">
+            <div class="loading-message" id="loadingMessage">
+                Select Department and Semester to load subjects...
+            </div>
+            <div id="subjectsContainer" style="display: none;">
+                <table class="marks-table" id="marksTable">
+                    <thead>
+                        <tr>
+                            <th style="text-align: left; min-width: 200px;">Subject</th>
+                            <th>Credits</th>
+                            <th>CAT-1<br>(50)</th>
+                            <th>CAT-2<br>(50)</th>
+                            <th>CAT-3<br>(100)</th>
+                            <th>Assign<br>(20)</th>
+                            <th>Attend<br>(%)</th>
+                            <th>Univ<br>(100)</th>
+                            <th>Internal</th>
+                            <th>External</th>
+                            <th>Total</th>
+                            <th>Grade</th>
+                        </tr>
+                    </thead>
+                    <tbody id="subjectsTableBody">
+                    </tbody>
+                    <tfoot>
+                        <tr class="summary-row">
+                            <td style="text-align: left;"><strong>Summary</strong></td>
+                            <td id="totalCredits">0</td>
+                            <td colspan="6"></td>
+                            <td colspan="2"><strong>SGPA:</strong></td>
+                            <td id="sgpa" class="sgpa-value">0.00</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        <div style="margin-top: 32px; display: flex; gap: 12px;">
+            <button type="submit" class="btn btn-primary" style="flex: 1;">
+                {% if student %} Save Changes {% else %} Create Student with Marks {% endif %}
+            </button>
+            <a href="{{ url_for('index') }}" class="btn btn-outline">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<style>
+    .section-header {
+        font-size: 1.1em;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 16px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid var(--accent);
+    }
+
+    .marks-info-panel {
+        display: flex;
+        gap: 24px;
+        margin-bottom: 20px;
+        padding: 16px;
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+        border-radius: 8px;
+        border: 1px solid rgba(99, 102, 241, 0.2);
+    }
+
+    .marks-info-item {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .marks-label {
+        font-weight: 600;
+        color: var(--accent);
+    }
+
+    .marks-detail {
+        font-size: 0.85em;
+        color: var(--text-secondary);
+    }
+
+    .loading-message {
+        text-align: center;
+        padding: 40px;
+        color: var(--text-secondary);
+        font-style: italic;
+    }
+
+    .marks-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9em;
+        background: var(--bg-card);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .marks-table th,
+    .marks-table td {
+        padding: 10px 6px;
+        text-align: center;
+        border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .marks-table th {
+        background: var(--bg-hover);
+        color: var(--text-primary);
+        font-weight: 600;
+        font-size: 0.85em;
+    }
+
+    .marks-table tbody tr:hover {
+        background: var(--bg-hover);
+    }
+
+    .mark-input {
+        width: 55px;
+        padding: 6px;
+        border: 1px solid var(--border-subtle);
+        border-radius: 4px;
+        text-align: center;
+        font-size: 0.9em;
+        background: var(--bg-main);
+        color: var(--text-primary);
+    }
+
+    .mark-input:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+    }
+
+    .calc-cell {
+        font-weight: 600;
+        min-width: 50px;
+    }
+
+    .internal-cell {
+        color: #10b981;
+    }
+
+    .external-cell {
+        color: #f59e0b;
+    }
+
+    .total-cell {
+        color: #8b5cf6;
+    }
+
+    .grade-cell {
+        color: var(--accent);
+    }
+
+    .summary-row {
+        background: var(--bg-hover);
+    }
+
+    .sgpa-value {
+        font-size: 1.2em;
+        font-weight: 700;
+        color: var(--accent);
+    }
+
+    .subject-code {
+        font-weight: 600;
+        color: var(--accent);
+        font-size: 0.8em;
+    }
+
+    .subject-name {
+        color: var(--text-secondary);
+        font-size: 0.85em;
+    }
+</style>
+
+<script>
+    const GRADE_SCALE = {
+        'O': { min: 91, max: 100, points: 10 },
+        'A+': { min: 81, max: 90, points: 9 },
+        'A': { min: 71, max: 80, points: 8 },
+        'B+': { min: 61, max: 70, points: 7 },
+        'B': { min: 56, max: 60, points: 6 },
+        'C': { min: 50, max: 55, points: 5 },
+        'RA': { min: 0, max: 49, points: 0 }
+    };
+
+    function getGrade(marks) {
+        for (const [grade, info] of Object.entries(GRADE_SCALE)) {
+            if (marks >= info.min && marks <= info.max) {
+                return { grade, points: info.points };
+            }
+        }
+        return { grade: 'RA', points: 0 };
+    }
+
+    function calculateRow(row) {
+        const inputs = row.querySelectorAll('.mark-input');
+        const cat1 = parseFloat(inputs[0].value) || 0;
+        const cat2 = parseFloat(inputs[1].value) || 0;
+        const cat3 = parseFloat(inputs[2].value) || 0;
+        const assignment = parseFloat(inputs[3].value) || 0;
+        const attendance = parseFloat(inputs[4].value) || 0;
+        const university = parseFloat(inputs[5].value) || 0;
+
+        const catAvg = (cat1 + cat2) / 2;
+        const catScaled = (catAvg / 50) * 15;
+        const cat3Scaled = (cat3 / 100) * 10;
+        const assignScaled = (assignment / 20) * 5;
+        const attendScaled = (attendance / 100) * 5;
+        const internalTotal = Math.min(40, catScaled + cat3Scaled + assignScaled + attendScaled);
+        const externalScaled = (university / 100) * 60;
+        const total = Math.round(internalTotal + externalScaled);
+        const { grade, points } = getGrade(total);
+
+        row.querySelector('.internal-cell').textContent = internalTotal.toFixed(1);
+        row.querySelector('.external-cell').textContent = externalScaled.toFixed(1);
+        row.querySelector('.total-cell').textContent = total;
+        row.querySelector('.grade-cell').textContent = grade;
+
+        return {
+            credits: parseInt(row.dataset.credits) || 0,
+            gradePoints: points,
+            total: total,
+            hasMarks: cat1 || cat2 || cat3 || assignment || attendance || university
+        };
+    }
+
+    function calculateAll() {
+        const rows = document.querySelectorAll('#subjectsTableBody tr');
+        let totalCredits = 0;
+        let totalCreditPoints = 0;
+
+        rows.forEach(row => {
+            const result = calculateRow(row);
+            if (result.hasMarks) {
+                totalCredits += result.credits;
+                totalCreditPoints += result.credits * result.gradePoints;
+            }
+        });
+
+        const sgpa = totalCredits > 0 ? (totalCreditPoints / totalCredits).toFixed(2) : '0.00';
+        document.getElementById('totalCredits').textContent = totalCredits;
+        document.getElementById('sgpa').textContent = sgpa;
+    }
+
+    function loadSubjects() {
+        const deptId = document.getElementById('department_id').value;
+        const semester = document.getElementById('current_semester').value;
+
+        document.getElementById('loadingMessage').textContent = 'Loading subjects...';
+        document.getElementById('loadingMessage').style.display = 'block';
+        document.getElementById('subjectsContainer').style.display = 'none';
+
+        fetch(`/api/subjects/${deptId}/${semester}`)
+            .then(response => response.json())
+            .then(data => {
+                const tbody = document.getElementById('subjectsTableBody');
+                tbody.innerHTML = '';
+
+                if (data.subjects.length === 0) {
+                    document.getElementById('loadingMessage').textContent = 'No subjects found for this semester.';
+                    return;
+                }
+
+                data.subjects.forEach(subject => {
+                    const row = document.createElement('tr');
+                    row.dataset.credits = subject.credits;
+                    row.innerHTML = `
+                    <td style="text-align: left;">
+                        <div class="subject-code">${subject.code}</div>
+                        <div class="subject-name">${subject.name}</div>
+                    </td>
+                    <td>${subject.credits}</td>
+                    <td><input type="number" name="cat1_${subject.id}" class="mark-input" min="0" max="50" step="0.5" placeholder="0"></td>
+                    <td><input type="number" name="cat2_${subject.id}" class="mark-input" min="0" max="50" step="0.5" placeholder="0"></td>
+                    <td><input type="number" name="cat3_${subject.id}" class="mark-input" min="0" max="100" step="0.5" placeholder="0"></td>
+                    <td><input type="number" name="assignment_${subject.id}" class="mark-input" min="0" max="20" step="0.5" placeholder="0"></td>
+                    <td><input type="number" name="attendance_${subject.id}" class="mark-input" min="0" max="100" step="1" placeholder="0"></td>
+                    <td><input type="number" name="university_${subject.id}" class="mark-input" min="0" max="100" step="0.5" placeholder="0"></td>
+                    <td class="calc-cell internal-cell">0</td>
+                    <td class="calc-cell external-cell">0</td>
+                    <td class="calc-cell total-cell">0</td>
+                    <td class="calc-cell grade-cell">-</td>
+                `;
+                    tbody.appendChild(row);
+
+                    // Add event listeners
+                    row.querySelectorAll('.mark-input').forEach(input => {
+                        input.addEventListener('input', calculateAll);
+                    });
+                });
+
+                document.getElementById('loadingMessage').style.display = 'none';
+                document.getElementById('subjectsContainer').style.display = 'block';
+            })
+            .catch(err => {
+                document.getElementById('loadingMessage').textContent = 'Error loading subjects. Please try again.';
+                console.error(err);
+            });
+    }
+
+    // Load subjects on page load
+    document.addEventListener('DOMContentLoaded', function () {
+        const studentForm = document.getElementById('studentForm');
+        if (studentForm && studentForm.dataset.isNew === 'true') {
+            loadSubjects();
+        }
+    });
+</script>
+{% endblock %}

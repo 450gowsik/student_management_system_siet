@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sri Shakthi Student Management System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <nav>
+                <a href="{{ url_for('index') }}" class="brand"
+                    style="display: flex; flex-direction: column; line-height: 1.1; text-decoration: none;">
+                    <span
+                        style="font-size: 0.65rem; color: var(--text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em;">Sri
+                        Shakthi Institute of Engineering & Technology</span>
+                    <span style="font-size: 1.25rem;">Student Management<span> System</span></span>
+                </a>
+                <div class="nav-links" style="display: flex; align-items: center; gap: 20px;">
+                    {% if session.user_id %}
+                    {% if session.role != 'STUDENT' %}
+                    <a href="{{ url_for('index') }}" class="{{ 'active' if request.endpoint == 'index' }}">Dashboard</a>
+                    <a href="{{ url_for('teacher_search') }}"
+                        class="{{ 'active' if request.endpoint == 'teacher_search' }}">Search All</a>
+                    <a href="{{ url_for('analytics') }}"
+                        class="{{ 'active' if request.endpoint == 'analytics' }}">Analytics</a>
+                    {% endif %}
+                    {% if session.role == 'ADMIN' %}
+                    <a href="{{ url_for('master_view') }}"
+                        class="{{ 'active' if request.endpoint == 'master_view' }}">Master View</a>
+                    <a href="{{ url_for('user_management') }}"
+                        class="{{ 'active' if request.endpoint == 'user_management' }}">Users</a>
+                    {% endif %}
+                    {% if session.role == 'STUDENT' %}
+                    <a href="{{ url_for('student_profile') }}"
+                        class="{{ 'active' if request.endpoint == 'student_profile' }}">My Profile</a>
+                    {% endif %}
+                    {% if session.role != 'STUDENT' %}
+                    <a href="{{ url_for('create') }}" class="btn btn-primary btn-sm">+ New Student</a>
+                    {% endif %}
+                    <span style="color: var(--primary); font-weight: 500;">{{ session.full_name }}</span>
+                    <a href="{{ url_for('logout') }}">Logout</a>
+                    {% else %}
+                    <a href="{{ url_for('login') }}">Login</a>
+                    <a href="{{ url_for('signup') }}" class="btn btn-primary btn-sm">Sign Up</a>
+                    {% endif %}
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container fade-in">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="flash-messages">
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="text-center" style="padding: 2rem; color: var(--text-muted); font-size: 0.9rem;">
+
+    </footer>
+</body>
+
+</html>

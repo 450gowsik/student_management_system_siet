@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2>{{ departments[selected_dept] }}</h2>
+        <p class="text-muted">Viewing student records for the selected department.</p>
+    </div>
+</div>
+
+<div class="dashboard-container">
+    <!-- Sidebar Navigation -->
+    <aside class="dept-sidebar">
+        <div class="dept-title">Departments</div>
+        {% for dept in dept_list %}
+        <a href="{{ url_for('index', dept=dept.id) }}"
+            class="dept-link {{ 'active' if selected_dept|string == dept.id|string }}">
+            {{ dept.degree_type }} - {{ dept.name }}
+        </a>
+        {% endfor %}
+    </aside>
+
+    <!-- Main Content Area -->
+    <section>
+        <!-- Year Tabs (Primary) -->
+        <div class="tabs-container">
+            <a href="{{ url_for('index', dept=selected_dept, year='all') }}"
+                class="tab-link {{ 'active' if selected_year == 'all' }}">All Years</a>
+            <a href="{{ url_for('index', dept=selected_dept, year='1') }}"
+                class="tab-link {{ 'active' if selected_year == '1' }}">I Year</a>
+            <a href="{{ url_for('index', dept=selected_dept, year='2') }}"
+                class="tab-link {{ 'active' if selected_year == '2' }}">II Year</a>
+            <a href="{{ url_for('index', dept=selected_dept, year='3') }}"
+                class="tab-link {{ 'active' if selected_year == '3' }}">III Year</a>
+            <a href="{{ url_for('index', dept=selected_dept, year='4') }}"
+                class="tab-link {{ 'active' if selected_year == '4' }}">IV Year</a>
+        </div>
+
+        <!-- Semester Tabs (Secondary, based on year) -->
+        {% if selected_year != 'all' %}
+        <div class="tabs-container" style="margin-top: 10px; padding: 8px;">
+            {% set year_num = selected_year|int %}
+            {% set sem1 = (year_num - 1) * 2 + 1 %}
+            {% set sem2 = (year_num - 1) * 2 + 2 %}
+            <a href="{{ url_for('index', dept=selected_dept, year=selected_year, sem='all') }}"
+                class="tab-link {{ 'active' if selected_sem == 'all' }}" style="font-size: 0.85rem;">Both Semesters</a>
+            <a href="{{ url_for('index', dept=selected_dept, year=selected_year, sem=sem1) }}"
+                class="tab-link {{ 'active' if selected_sem|string == sem1|string }}" style="font-size: 0.85rem;">Sem {{
+                sem1 }}</a>
+            <a href="{{ url_for('index', dept=selected_dept, year=selected_year, sem=sem2) }}"
+                class="tab-link {{ 'active' if selected_sem|string == sem2|string }}" style="font-size: 0.85rem;">Sem {{
+                sem2 }}</a>
+        </div>
+        {% endif %}
+
+        <!-- Quick Stats -->
+        <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
+            <div class="stat-card">
+                <div class="stat-label">Total Students</div>
+                <div class="stat-value">{{ students|length }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Average CGPA</div>
+                <div class="stat-value">
+                    {% if students %}
+                    {% set cgpas = students|map(attribute='cgpa')|list %}
+                    {{ (cgpas|sum / cgpas|length)|round(2) if cgpas|length > 0 else '-' }}
+                    {% else %}
+                    -
+                    {% endif %}
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Prev Sem Avg</div>
+                <div class="stat-value">
+                    {% if students %}
+                    {% set prev_avgs = students|map(attribute='prev_sem_avg')|list|select('gt', 0)|list %}
+                    {{ (prev_avgs|sum / prev_avgs|length)|round(2) if prev_avgs|length > 0 else '-' }}
+                    {% else %}
+                    -
+                    {% endif %}
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Toppers (≥9.0)</div>
+                <div class="stat-value">
+                    {{ students|selectattr('cgpa', 'ge', 9.0)|list|length }}
+                </div>
+            </div>
+        </div>
+
+        {% if students %}
+        <div class="table-wrapper" style="margin-top: 20px;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Roll No</th>
+                        <th>Student Name</th>
+                        <th>Semester</th>
+                        <th>CGPA</th>
+                        <th>Performance</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students %}
+                    <tr>
+                        <td><span class="badge badge-blue">{{ student.roll_number }}</span></td>
+                        <td>{{ student.name }}</td>
+                        <td>Sem {{ student.current_semester }}</td>
+                        <td>{{ student.cgpa }}</td>
+                        <td>
+                            {% if student.cgpa >= 9.0 %}
+                            <span class="badge badge-green">Topper</span>
+                            {% elif student.cgpa < 5.0 %} <span class="badge badge-red">Improve</span>
+                                {% else %}
+                                <span class="badge badge-yellow">Average</span>
+                                {% endif %}
+                        </td>
+                        <td>
+                            {% if student.cgpa >= 5.0 %}
+                            <span class="text-green">Pass</span>
+                            {% else %}
+                            <span class="text-red">Arrear</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <a href="{{ url_for('view_student', roll_no=student.roll_number) }}"
+                                    class="btn btn-sm btn-outline">View</a>
+                                <a href="{{ url_for('edit', roll_no=student.roll_number) }}"
+                                    class="btn btn-sm btn-primary">Edit</a>
+                                <form action="{{ url_for('delete', roll_no=student.roll_number) }}" method="POST"
+                                    style="margin: 0;">
+                                    <button type="submit" class="btn btn-sm btn-danger"
+                                        onclick="return confirm('Delete this student?')">Delete</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <p>No students found for the selected filters.</p>
+        </div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

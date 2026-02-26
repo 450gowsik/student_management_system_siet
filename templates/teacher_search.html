@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid" style="padding: 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <div>
+            <h1 style="font-size: 2rem; margin-bottom: 4px;">Search All Students</h1>
+            <p class="text-muted">Search and view students across all departments</p>
+        </div>
+        <div style="display: flex; gap: 12px;">
+            <input type="text" id="teacherSearch" placeholder="Search anything (Name, Roll, Dept)..."
+                style="width: 300px; padding: 10px 16px; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 8px;">
+            <button class="btn btn-primary" onclick="window.print()">
+                <i class="fas fa-print"></i> Export
+            </button>
+        </div>
+    </div>
+
+    <!-- Scroll hint -->
+    <p class="text-muted" style="font-size: 0.85rem; margin-bottom: 8px;">
+        <i class="fas fa-arrow-right"></i> Scroll horizontally to see all columns →
+    </p>
+
+    <div class="card" style="overflow: visible;">
+        <div style="overflow-x: auto; overflow-y: auto; max-height: 70vh; scrollbar-width: thin;">
+            <table class="table" id="teacherTable" style="min-width: 1800px;">
+                <thead>
+                    <tr>
+                        <th>Roll Number</th>
+                        <th>Name</th>
+                        <th>Gender</th>
+                        <th>DOB</th>
+                        <th>Department</th>
+                        <th>Semester</th>
+                        <th>Admission Year</th>
+                        <th>CGPA</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Address</th>
+                        <th>Guardian Name</th>
+                        <th>Guardian Phone</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students %}
+                    <tr>
+                        <td><span class="badge" style="background: var(--bg-card-subtle); color: var(--primary);">{{
+                                student.roll_number }}</span></td>
+                        <td style="font-weight: 500;">{{ student.name }}</td>
+                        <td style="font-size: 0.85rem;">{{ student.gender or '-' }}</td>
+                        <td style="font-size: 0.85rem;">{{ student.dob.strftime('%d-%m-%Y') if student.dob else '-' }}
+                        </td>
+                        <td>{{ student.degree_type }} - {{ student.dept_name }}</td>
+                        <td>Sem {{ student.current_semester }}</td>
+                        <td style="font-size: 0.85rem;">{{ student.admission_year }}</td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span
+                                    class="{% if student.cgpa >= 9.0 %}text-gold{% elif student.cgpa >= 7.0 %}text-green{% elif student.cgpa >= 5.0 %}text-blue{% else %}text-red{% endif %}"
+                                    style="font-weight: 600;">
+                                    {{ student.cgpa }}
+                                </span>
+                            </div>
+                        </td>
+                        <td style="font-size: 0.85rem;" class="text-muted">{{ student.email or '-' }}</td>
+                        <td style="font-size: 0.85rem;" class="text-muted">{{ student.phone or '-' }}</td>
+                        <td style="font-size: 0.85rem; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
+                            title="{{ student.address or '' }}">{{ student.address or '-' }}</td>
+                        <td style="font-size: 0.85rem;">{{ student.guardian_name or '-' }}</td>
+                        <td style="font-size: 0.85rem;">{{ student.guardian_phone or '-' }}</td>
+                        <td>
+                            <div style="display: flex; gap: 8px; align-items: center; white-space: nowrap;">
+                                <a href="{{ url_for('view_student', roll_no=student.roll_number) }}" class="btn btn-sm"
+                                    style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.2);">View</a>
+                                <a href="{{ url_for('edit', roll_no=student.roll_number) }}"
+                                    class="btn btn-outline btn-sm">Edit</a>
+                                <form action="{{ url_for('delete', roll_no=student.roll_number) }}" method="POST"
+                                    style="margin: 0;">
+                                    <button type="submit" class="btn btn-danger btn-sm"
+                                        onclick="return confirm('Are you sure?')">Delete</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('teacherSearch').addEventListener('keyup', function () {
+        let filter = this.value.toUpperCase();
+        let rows = document.querySelector("#teacherTable tbody").rows;
+
+        for (let i = 0; i < rows.length; i++) {
+            let rowText = rows[i].textContent.toUpperCase();
+            if (rowText.includes(filter)) {
+                rows[i].style.display = "";
+            } else {
+                rows[i].style.display = "none";
+            }
+        }
+    });
+</script>
+{% endblock %}

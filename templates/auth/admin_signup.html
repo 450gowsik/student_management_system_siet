@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="form-panel" style="max-width: 400px; margin: 80px auto;">
+    <div style="text-align: center; margin-bottom: 32px;">
+        <h2 style="font-size: 1.75rem;">Admin Registration</h2>
+        <p class="text-muted">Request admin access to the system.</p>
+    </div>
+
+    <form method="POST" class="auth-form">
+        <div class="form-group">
+            <label for="full_name">Admin Name</label>
+            <input type="text" id="full_name" name="full_name" placeholder="Enter your full name" required autofocus>
+        </div>
+        <div class="form-group">
+            <label for="username">Admin Username</label>
+            <input type="text" id="username" name="username" placeholder="Choose an admin username" required>
+        </div>
+        <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" name="email" placeholder="your.email@example.com" required>
+            <small class="text-muted" style="font-size: 0.8rem; display: block; margin-top: 4px;">You'll receive an
+                approval notification at this email</small>
+        </div>
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" placeholder="Create a password" required>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%; height: 44px; margin-top: 8px;">
+            Request Admin Access
+        </button>
+    </form>
+
+    <div style="text-align: center; margin-top: 24px; font-size: 0.875rem;">
+        <span class="text-muted">Already have an account?</span>
+        <a href="{{ url_for('login') }}" style="color: var(--primary); font-weight: 500; margin-left: 4px;">Log In</a>
+    </div>
+
+    <div style="text-align: center; margin-top: 12px; font-size: 0.875rem;">
+        <span class="text-muted">Want to register as a teacher?</span>
+        <a href="{{ url_for('signup') }}" style="color: var(--primary); font-weight: 500; margin-left: 4px;">Teacher
+            Signup</a>
+    </div>
+</div>
+
+<style>
+    .auth-form {
+        background: var(--bg-card);
+        padding: 32px;
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--border-subtle);
+        box-shadow: var(--shadow-md);
+    }
+</style>
+{% endblock %}

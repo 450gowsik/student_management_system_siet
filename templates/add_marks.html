@@ -1,0 +1,661 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="marks-entry-container">
+    <!-- Student Header -->
+    <div class="student-header">
+        <div class="student-info">
+            <h2>📝 Marks Entry</h2>
+            <div class="student-details">
+                <span class="badge badge-primary">{{ student.roll_number }}</span>
+                <span class="student-name">{{ student.name }}</span>
+                <span class="badge badge-secondary">{{ dept_name }}</span>
+                <span class="badge badge-info">Currently in Sem {{ student.current_semester }}</span>
+            </div>
+        </div>
+        <a href="{{ url_for('view_student', roll_no=student.roll_number) }}" class="btn btn-outline">
+            ← Back to Profile
+        </a>
+    </div>
+
+    <!-- Semester Navigation -->
+    <div class="semester-tabs" style="margin-bottom: 24px; display: flex; gap: 8px; flex-wrap: wrap;">
+        {% for sem in range(1, 9) %}
+        <a href="{{ url_for('marks_entry', roll_no=student.roll_number, sem=sem) }}"
+            class="btn {{ 'btn-primary' if selected_sem == sem else 'btn-outline' }}"
+            style="min-width: 100px; text-decoration: none;">
+            Semester {{ sem }}
+        </a>
+        {% endfor %}
+    </div>
+
+    <!-- Anna University Evaluation Info -->
+    <div class="evaluation-info">
+        <h4>📋 Anna University Evaluation Pattern</h4>
+        <div class="info-grid">
+            <div class="info-card internal">
+                <div class="info-title">Internal Assessment</div>
+                <div class="info-value">40 Marks</div>
+                <div class="info-details">
+                    CAT-1 (50) + CAT-2 (50) + CAT-3 (100) + Assignment (20) + Attendance
+                </div>
+            </div>
+            <div class="info-card external">
+                <div class="info-title">University Exam</div>
+                <div class="info-value">60 Marks</div>
+                <div class="info-details">
+                    End Semester Examination (100 scaled to 60)
+                </div>
+            </div>
+            <div class="info-card total">
+                <div class="info-title">Total</div>
+                <div class="info-value">100 Marks</div>
+                <div class="info-details">
+                    Internal (40) + External (60) = Grade & GPA
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Marks Entry Form -->
+    <form method="POST" id="marksForm" class="marks-form">
+        <input type="hidden" name="academic_year" value="{{ academic_year }}">
+
+        <div class="table-wrapper">
+            <table class="marks-table">
+                <thead>
+                    <tr>
+                        <th rowspan="2" class="sticky-col">Subject</th>
+                        <th rowspan="2">Credits</th>
+                        <th colspan="5" class="internal-header">Internal Assessment (40)</th>
+                        <th rowspan="2">External<br>(100)</th>
+                        <th rowspan="2">Internal<br>Total</th>
+                        <th rowspan="2">External<br>(60)</th>
+                        <th rowspan="2">Total<br>(100)</th>
+                        <th rowspan="2">Grade</th>
+                        <th rowspan="2">GP</th>
+                    </tr>
+                    <tr>
+                        <th>CAT-1<br>(50)</th>
+                        <th>CAT-2<br>(50)</th>
+                        <th>CAT-3<br>(100)</th>
+                        <th>Assign<br>(20)</th>
+                        <th>Attend<br>(%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for subject in subjects %}
+                    <tr data-subject-id="{{ subject.id }}">
+                        <td class="sticky-col subject-name">
+                            <div class="subject-code">{{ subject.code }}</div>
+                            <div class="subject-title">{{ subject.name }}</div>
+                        </td>
+                        <td class="credits">{{ subject.credits }}</td>
+
+                        <!-- CAT-1 -->
+                        <td>
+                            <input type="number" name="cat1_{{ subject.id }}" class="mark-input cat1" min="0" max="50"
+                                step="0.5" value="{{ marks.get(subject.id, {}).get('cat1', '') }}" placeholder="0">
+                        </td>
+
+                        <!-- CAT-2 -->
+                        <td>
+                            <input type="number" name="cat2_{{ subject.id }}" class="mark-input cat2" min="0" max="50"
+                                step="0.5" value="{{ marks.get(subject.id, {}).get('cat2', '') }}" placeholder="0">
+                        </td>
+
+                        <!-- CAT-3 (Model) -->
+                        <td>
+                            <input type="number" name="cat3_{{ subject.id }}" class="mark-input cat3" min="0" max="100"
+                                step="0.5" value="{{ marks.get(subject.id, {}).get('cat3', '') }}" placeholder="0">
+                        </td>
+
+                        <!-- Assignment -->
+                        <td>
+                            <input type="number" name="assignment_{{ subject.id }}" class="mark-input assignment"
+                                min="0" max="20" step="0.5"
+                                value="{{ marks.get(subject.id, {}).get('assignment', '') }}" placeholder="0">
+                        </td>
+
+                        <!-- Attendance -->
+                        <td>
+                            <input type="number" name="attendance_{{ subject.id }}" class="mark-input attendance"
+                                min="0" max="100" step="1" value="{{ marks.get(subject.id, {}).get('attendance', '') }}"
+                                placeholder="0">
+                        </td>
+
+                        <!-- University Exam -->
+                        <td>
+                            <input type="number" name="university_{{ subject.id }}" class="mark-input university"
+                                min="0" max="100" step="0.5"
+                                value="{{ marks.get(subject.id, {}).get('university', '') }}" placeholder="0">
+                        </td>
+
+                        <!-- Calculated Fields -->
+                        <td class="calc internal-total">0</td>
+                        <td class="calc external-scaled">0</td>
+                        <td class="calc total-marks">0</td>
+                        <td class="calc grade">-</td>
+                        <td class="calc grade-point">0</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr class="summary-row">
+                        <td class="sticky-col"><strong>Summary</strong></td>
+                        <td id="totalCredits">0</td>
+                        <td colspan="7"></td>
+                        <td colspan="2"><strong>SGPA:</strong></td>
+                        <td id="sgpa" class="sgpa-value">0.00</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-lg">
+                💾 Save All Marks
+            </button>
+            <button type="button" class="btn btn-outline" onclick="calculateAll()">
+                🔄 Recalculate
+            </button>
+        </div>
+    </form>
+
+    <!-- Grade Scale Reference -->
+    <div class="grade-scale-card">
+        <h4>📊 Anna University Grade Scale</h4>
+        <div class="grade-grid">
+            <div class="grade-item grade-o"><span class="grade-letter">O</span><span
+                    class="grade-range">91-100</span><span class="grade-gp">10</span></div>
+            <div class="grade-item grade-aplus"><span class="grade-letter">A+</span><span
+                    class="grade-range">81-90</span><span class="grade-gp">9</span></div>
+            <div class="grade-item grade-a"><span class="grade-letter">A</span><span
+                    class="grade-range">71-80</span><span class="grade-gp">8</span></div>
+            <div class="grade-item grade-bplus"><span class="grade-letter">B+</span><span
+                    class="grade-range">61-70</span><span class="grade-gp">7</span></div>
+            <div class="grade-item grade-b"><span class="grade-letter">B</span><span
+                    class="grade-range">56-60</span><span class="grade-gp">6</span></div>
+            <div class="grade-item grade-c"><span class="grade-letter">C</span><span
+                    class="grade-range">50-55</span><span class="grade-gp">5</span></div>
+            <div class="grade-item grade-ra"><span class="grade-letter">RA</span><span
+                    class="grade-range">0-49</span><span class="grade-gp">0</span></div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .marks-entry-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .student-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        padding: 20px;
+        background: var(--bg-card);
+        border-radius: 12px;
+        border: 1px solid var(--border-subtle);
+    }
+
+    .student-info h2 {
+        margin: 0 0 12px 0;
+        color: var(--text-primary);
+    }
+
+    .student-details {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .student-name {
+        font-size: 1.1em;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.85em;
+        font-weight: 500;
+    }
+
+    .badge-primary {
+        background: var(--accent);
+        color: white;
+    }
+
+    .badge-secondary {
+        background: var(--bg-hover);
+        color: var(--text-secondary);
+    }
+
+    .badge-info {
+        background: #3b82f6;
+        color: white;
+    }
+
+    .evaluation-info {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 24px;
+        color: white;
+    }
+
+    .evaluation-info h4 {
+        margin: 0 0 16px 0;
+        color: white;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+    }
+
+    .info-card {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 16px;
+        text-align: center;
+    }
+
+    .info-card.internal {
+        border-left: 4px solid #10b981;
+    }
+
+    .info-card.external {
+        border-left: 4px solid #f59e0b;
+    }
+
+    .info-card.total {
+        border-left: 4px solid #8b5cf6;
+    }
+
+    .info-title {
+        font-size: 0.9em;
+        opacity: 0.9;
+        margin-bottom: 4px;
+    }
+
+    .info-value {
+        font-size: 1.5em;
+        font-weight: 700;
+    }
+
+    .info-details {
+        font-size: 0.75em;
+        opacity: 0.7;
+        margin-top: 8px;
+    }
+
+    .table-wrapper {
+        overflow-x: auto;
+        background: var(--bg-card);
+        border-radius: 12px;
+        border: 1px solid var(--border-subtle);
+        margin-bottom: 24px;
+    }
+
+    .marks-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9em;
+    }
+
+    .marks-table th,
+    .marks-table td {
+        padding: 12px 8px;
+        text-align: center;
+        border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .marks-table th {
+        background: var(--bg-hover);
+        color: var(--text-primary);
+        font-weight: 600;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .internal-header {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+        color: white !important;
+    }
+
+    .sticky-col {
+        position: sticky;
+        left: 0;
+        background: var(--bg-card);
+        z-index: 5;
+        min-width: 180px;
+        text-align: left !important;
+        padding-left: 16px !important;
+    }
+
+    th.sticky-col {
+        background: var(--bg-hover);
+        z-index: 15;
+    }
+
+    .subject-code {
+        font-weight: 600;
+        color: var(--accent);
+        font-size: 0.85em;
+    }
+
+    .subject-title {
+        font-size: 0.9em;
+        color: var(--text-secondary);
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .credits {
+        font-weight: 600;
+        color: var(--accent);
+    }
+
+    .mark-input {
+        width: 60px;
+        padding: 8px;
+        border: 1px solid var(--border-subtle);
+        border-radius: 6px;
+        text-align: center;
+        font-size: 0.95em;
+        background: var(--bg-main);
+        color: var(--text-primary);
+        transition: all 0.2s;
+    }
+
+    .mark-input:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    }
+
+    .mark-input:invalid {
+        border-color: #ef4444;
+    }
+
+    .calc {
+        font-weight: 600;
+        background: var(--bg-hover);
+    }
+
+    .internal-total {
+        color: #10b981;
+    }
+
+    .external-scaled {
+        color: #f59e0b;
+    }
+
+    .total-marks {
+        color: #8b5cf6;
+    }
+
+    .grade {
+        font-size: 1.1em;
+    }
+
+    .grade-point {
+        color: var(--accent);
+    }
+
+    .summary-row {
+        background: var(--bg-hover);
+        font-size: 1.05em;
+    }
+
+    .sgpa-value {
+        font-size: 1.3em;
+        font-weight: 700;
+        color: var(--accent);
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 16px;
+        justify-content: center;
+        margin-bottom: 32px;
+    }
+
+    .btn-lg {
+        padding: 14px 32px;
+        font-size: 1.1em;
+    }
+
+    .grade-scale-card {
+        background: var(--bg-card);
+        border-radius: 12px;
+        padding: 24px;
+        border: 1px solid var(--border-subtle);
+    }
+
+    .grade-scale-card h4 {
+        margin: 0 0 16px 0;
+        color: var(--text-primary);
+    }
+
+    .grade-grid {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .grade-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 12px 20px;
+        border-radius: 8px;
+        min-width: 80px;
+    }
+
+    .grade-letter {
+        font-size: 1.3em;
+        font-weight: 700;
+    }
+
+    .grade-range {
+        font-size: 0.8em;
+        opacity: 0.8;
+    }
+
+    .grade-gp {
+        font-size: 0.9em;
+        font-weight: 600;
+    }
+
+    .grade-o {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+    }
+
+    .grade-aplus {
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
+        color: white;
+    }
+
+    .grade-a {
+        background: linear-gradient(135deg, #6366f1, #4f46e5);
+        color: white;
+    }
+
+    .grade-bplus {
+        background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+        color: white;
+    }
+
+    .grade-b {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: white;
+    }
+
+    .grade-c {
+        background: linear-gradient(135deg, #f97316, #ea580c);
+        color: white;
+    }
+
+    .grade-ra {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        color: white;
+    }
+
+    /* Pass/Fail indicators */
+    tr.pass-row .total-marks {
+        color: #10b981;
+    }
+
+    tr.fail-row .total-marks {
+        color: #ef4444;
+    }
+
+    tr.fail-row .grade {
+        color: #ef4444;
+    }
+
+    @media (max-width: 768px) {
+        .student-header {
+            flex-direction: column;
+            gap: 16px;
+            text-align: center;
+        }
+
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+    }
+</style>
+
+<script>
+    // Anna University Grade Scale
+    const GRADE_SCALE = {
+        'O': { min: 91, max: 100, points: 10 },
+        'A+': { min: 81, max: 90, points: 9 },
+        'A': { min: 71, max: 80, points: 8 },
+        'B+': { min: 61, max: 70, points: 7 },
+        'B': { min: 56, max: 60, points: 6 },
+        'C': { min: 50, max: 55, points: 5 },
+        'RA': { min: 0, max: 49, points: 0 }
+    };
+
+    function getGrade(marks) {
+        for (const [grade, info] of Object.entries(GRADE_SCALE)) {
+            if (marks >= info.min && marks <= info.max) {
+                return { grade, points: info.points };
+            }
+        }
+        return { grade: 'RA', points: 0 };
+    }
+
+    function calculateRow(row) {
+        const cat1 = parseFloat(row.querySelector('.cat1').value) || 0;
+        const cat2 = parseFloat(row.querySelector('.cat2').value) || 0;
+        const cat3 = parseFloat(row.querySelector('.cat3').value) || 0;
+        const assignment = parseFloat(row.querySelector('.assignment').value) || 0;
+        const attendance = parseFloat(row.querySelector('.attendance').value) || 0;
+        const university = parseFloat(row.querySelector('.university').value) || 0;
+
+        // Anna University Internal Calculation:
+        // Best 2 of CAT1, CAT2 scaled + CAT3 scaled + Assignment + Attendance
+        // CAT1, CAT2: 50 marks each, take average of best 2, scale to 15
+        // CAT3: 100 marks, scale to 10
+        // Assignment: 20 marks, scale to 5
+        // Attendance: 100%, scale to 5
+        // Total Internal: 40 marks
+
+        // Scale CATs (best 2 average out of 50, scaled to 15)
+        const cats = [cat1, cat2].sort((a, b) => b - a); // Sort descending
+        const catAvg = (cats[0] + cats[1]) / 2;
+        const catScaled = (catAvg / 50) * 15;
+
+        // Scale CAT3 (100 to 10)
+        const cat3Scaled = (cat3 / 100) * 10;
+
+        // Scale Assignment (20 to 5)
+        const assignmentScaled = (assignment / 20) * 5;
+
+        // Scale Attendance (100% to 5)
+        const attendanceScaled = (attendance / 100) * 5;
+
+        // Internal Total (40)
+        const internalTotal = Math.min(40, catScaled + cat3Scaled + assignmentScaled + attendanceScaled);
+
+        // External scaled (100 to 60)
+        const externalScaled = (university / 100) * 60;
+
+        // Total
+        const total = Math.round(internalTotal + externalScaled);
+
+        // Grade
+        const { grade, points } = getGrade(total);
+
+        // Update display
+        row.querySelector('.internal-total').textContent = internalTotal.toFixed(1);
+        row.querySelector('.external-scaled').textContent = externalScaled.toFixed(1);
+        row.querySelector('.total-marks').textContent = total;
+        row.querySelector('.grade').textContent = grade;
+        row.querySelector('.grade-point').textContent = points;
+
+        // Add pass/fail class
+        row.classList.remove('pass-row', 'fail-row');
+        row.classList.add(total >= 50 ? 'pass-row' : 'fail-row');
+
+        return {
+            credits: parseInt(row.querySelector('.credits').textContent) || 0,
+            gradePoints: points,
+            total: total
+        };
+    }
+
+    function calculateAll() {
+        const rows = document.querySelectorAll('tbody tr');
+        let totalCredits = 0;
+        let totalCreditPoints = 0;
+
+        rows.forEach(row => {
+            const result = calculateRow(row);
+            if (result.total > 0) {
+                totalCredits += result.credits;
+                totalCreditPoints += result.credits * result.gradePoints;
+            }
+        });
+
+        // Calculate SGPA
+        const sgpa = totalCredits > 0 ? (totalCreditPoints / totalCredits).toFixed(2) : '0.00';
+
+        document.getElementById('totalCredits').textContent = totalCredits;
+        document.getElementById('sgpa').textContent = sgpa;
+    }
+
+    // Add event listeners
+    document.querySelectorAll('.mark-input').forEach(input => {
+        input.addEventListener('input', function () {
+            calculateRow(this.closest('tr'));
+            calculateAll();
+        });
+    });
+
+    // Calculate on page load
+    document.addEventListener('DOMContentLoaded', calculateAll);
+</script>
+{% endblock %}
