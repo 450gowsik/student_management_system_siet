@@ -1519,4 +1519,4 @@ def marks_entry(roll_no):
 if __name__ == '__main__':
     # Initialize DB if not exists
     database.init_db()
-    app.run(debug=True, port=5000)
+    app.run(host="0.0.0.0", port=8080)
