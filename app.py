@@ -17,6 +17,34 @@ from email.mime.multipart import MIMEMultipart
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_secret_key_here'
 
+
+def ensure_subjects_seeded():
+    """Populate subject master data on first run if the table is empty."""
+    conn = database.get_db_connection()
+    if not conn:
+        return False
+
+    try:
+        cursor = conn.cursor()
+        cursor.execute('SELECT COUNT(*) FROM subjects')
+        subject_count = cursor.fetchone()[0]
+        cursor.close()
+        conn.close()
+
+        if subject_count > 0:
+            return False
+
+        from seed_subjects import seed_subjects
+        seed_subjects()
+        return True
+    except Exception as exc:
+        try:
+            conn.close()
+        except Exception:
+            pass
+        app.logger.warning(f'Unable to auto-seed subjects: {exc}')
+        return False
+
 # Email Configuration (SMTP)
 # Configured for: gowsikbabubabu@gmail.com
 EMAIL_CONFIG = {
@@ -515,6 +543,7 @@ def index():
 @login_required
 def get_subjects_api(dept_id, semester):
     """API endpoint to get subjects for a department and semester"""
+    ensure_subjects_seeded()
     conn = database.get_db_connection()
     cursor = conn.cursor(dictionary=True)
     cursor.execute('''
@@ -533,6 +562,7 @@ def get_subjects_api(dept_id, semester):
 @login_required
 @teacher_required
 def create():
+    ensure_subjects_seeded()
     conn = database.get_db_connection()
     cursor = conn.cursor(dictionary=True)
     
@@ -1351,6 +1381,7 @@ def student_profile():
 @teacher_required
 def marks_entry(roll_no):
     """Marks entry page for a student following Anna University format"""
+    ensure_subjects_seeded()
     conn = database.get_db_connection()
     cursor = conn.cursor(dictionary=True)
     
@@ -1519,4 +1550,5 @@ def marks_entry(roll_no):
 if __name__ == '__main__':
     # Initialize DB if not exists
     database.init_db()
+    ensure_subjects_seeded()
     app.run(host="0.0.0.0", port=5000, debug=True)

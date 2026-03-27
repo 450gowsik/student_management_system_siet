@@ -1,6 +1,8 @@
 import mysql.connector
 
-conn = mysql.connector.connect(host='localhost', user='root', password='gowsik', database='student_management_v2')
+from database_v2 import DB_CONFIG
+
+conn = mysql.connector.connect(**DB_CONFIG)
 cursor = conn.cursor()
 
 # Count subjects per department

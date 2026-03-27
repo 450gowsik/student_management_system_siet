@@ -9,13 +9,7 @@ from mysql.connector import Error
 import random
 from datetime import datetime
 
-DB_CONFIG = {
-    'host': 'localhost',
-    'port': 3306,
-    'user': 'root',
-    'password': 'gowsik',
-    'database': 'student_management_v2'
-}
+from database_v2 import DB_CONFIG
 
 # Anna University Grade Scale
 GRADE_SCALE = {
